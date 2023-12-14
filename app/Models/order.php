@@ -18,11 +18,11 @@ class order extends Model
             :$this->total_price-($this->total_price/$code->discount),
         );
     }
-    public function scopeOf(Builder $query,string $oper,?string $type): void
-    {
-        $type!=null?$query->where($oper,$type):0;
+    // public function scopeOf(Builder $query,string $oper,?string $type): void
+    // {
+    //     $type!=null?$query->where($oper,$type):0;
         
-    }
+    // }
     protected $appends = ['price_discount'];
     protected $fillable=[
         'name',
@@ -42,7 +42,7 @@ class order extends Model
         $out= orderItem::where('order_id',$this->id)->
         selectRaw('SUM(Preparation_time*quantity) as total')->
         join('items','item_id','=','items.id')->get();
-        return $out[0]->total;
+        return (int) $out[0]->total;
         //->withSum('item','Preparation_time')->sum('item_sum_preparation_time')
         
     }  
@@ -51,7 +51,7 @@ class order extends Model
         selectRaw('SUM(price*quantity) as total')->
 
         join('items','item_id','=','items.id')->get();
-        return $out[0]->total;
+        return (int)$out[0]->total;
     }
 
     function user(){

@@ -87,36 +87,29 @@ class OrderController extends Controller
       $filters = [];
       $request->filled('id') ? $filters[] = ['id', '=', $request->id] : 0;
       $request->filled('name') ? $filters[] = ['name', 'like', "%{$request->name}%"] : 0;
+      $request->filled('from_price') ? $filters[] = ['total_price','>=',$request->from_price]:0;
+      $request->filled('to_price') ? $filters[] = ['total_price','<=',$request->to_price]:0;
+      $request->filled('from_created_at') ? $filters[] = ['created_at','>=',$request->from_created_at]:0;
+      $request->filled('to_created_at') ? $filters[] = ['created_at','<=',$request->to_created_at]:0;
+      $request->filled('user_id') ? $filters[] = ['user_id','=',$request->user_id]:0;
 
-      // $order=orderItem:://selectRaw('GROUP_CONCAT( orders.name) as orr_id,count(order_items.id)')->
-      //  where($filters)//->join('order_items','orders.id','=','order_items.order_id')
-      // ->withSum('item','Preparation_time')
-      //   ->withSum('item','price')
-      //->groupBy('order_id')
-      //   ->Of('type_order_id',$request->type)
-      //   ->Of('state_order_id',$request->state)
-      //   ->Of('user_id',$request->user)
-      //->get();
-      //   $total_preparation_time=0;
-      //   foreach($order as $ord){
-      //    $total_preparation_time=$total_preparation_time+$ord->quantity*$ord->item_sum_preparation_time;
-      //   }
-      //   $total_price=0;
-      //   foreach($order as $ord){
-      //    $total_price=$total_price+$ord->quantity*$ord->item_sum_price;
-      //   }
+      $order = order::where($filters)->
+      when($request->type_order_id,function($q) use($request){
+         return $q->whereIn('type_order_id', $request->type_order_id);
+      })
+      ->get();
 
-      //   echo $order->sum('item_sum_preparation_time');
-      //   echo $order->sum('item_sum_price');
-      $order = order::where($filters)->get();
-
-      //return $order;
+    $order->where($filters);
       return OrderResource::collection($order);
    }
 
    function report(Request $request)
    {
+      $filters = [];
+      $request->filled('stage_order_id') ? $filters[] = ['stage_order_id', '=', $request->stage_order_id] : 0;
+      
       $typeOrder = order::selectRaw('GROUP_CONCAT(DISTINCT type_orders.name) as type_order_id, count(*) as total')
+         ->where($filters)
          ->join('type_orders', 'type_order_id', '=', 'type_orders.id')
          ->groupBy('type_order_id')
          ->orderBy('total', 'desc')
