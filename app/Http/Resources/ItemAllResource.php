@@ -17,6 +17,5 @@ class ItemAllResource extends JsonResource
         return [
             $this->name=>ItemResource::collection($this->itemAll),
         ];
-        return parent::toArray($request);
     }
 }

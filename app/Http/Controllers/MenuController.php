@@ -8,50 +8,62 @@ use App\Http\Resources\ItemAllResource;
 use App\Http\Resources\MenuResource;
 use App\Models\item;
 use App\Models\menu;
+use App\Traits\GeneralOutput;
 use Illuminate\Http\Request;
 
 class MenuController extends Controller
 {
+    use GeneralOutput;
     function show(Request $request){
         $filters=[];
         $request->filled('from_price')?$filters[]=['price', '>=', $request->from_price] : 0;
-        $request->filled('to_price')?$filters[]=['price', '<=', $request->from_price] : 0;
-       // $filters[]=['items.active', '=', 1];
-        $menu=menu::where($filters)->with('item')
-        ->when($request->menu != [], function($q) use( $request) {
-            return $q->where('name','like', $request->menu);
-        })
-        ->get();
-       
-          return MenuResource::collection($menu);
+        $request->filled('to_price')?$filters[]=['price', '<=', $request->to_price] : 0;
+        
+        $menu=menu::where($filters)->
+        // with('item')
+        // ->when($request->menu != [], function($q) use( $request) {
+        //     return $q->where('name','like', $request->menu);
+        // })
+        //->join('items','menus.id','=','items.menu_id')
+        get();
+       //return $menu;
+       return $this->returnData('foods',MenuResource::collection($menu));
     }
     function showAll(Request $request){
         $filters=[];
         $request->filled('from_price')?$filters[]=['price', '>=', $request->from_price] : 0;
-        $request->filled('to_price')?$filters[]=['price', '<=', $request->from_price] : 0;
+        $request->filled('to_price')?$filters[]=['price', '<=', $request->to_price] : 0;
 
         $menu=menu::where($filters)
         ->when($request->menu != [], function($q) use( $request) {
             return $q->where('name','like', $request->menu);
         })
         ->get();
-        //    Dump( $ms->where('item->id','=',$request->item));
-        // return [$ms[0]->item[0]];
-        return ItemAllResource::collection($menu);
+
+        return $this->returnData('foods',MenuResource::collection($menu));
     }
 
     function store(MenuStoreRequest $request){
-       $me=menu::create($request->all());
-       return $me;
+        $menu=menu::create($request->all());
+
+       return $this->returnData('data',$menu,'success create');
     }
 
     function update(MenuUpdateRequest $request,$id){
+        $validate= validator(['id'=>$id],['id'=>'exists:menus,id|integer']);
+        if( $validate->fails())
+        return $this->returnError($validate->errors()->getMessages());
+
         $menu=menu::findOrFail($id);
         $menu->update($request->all());
-       return $menu;
+       return $this->returnData('data',$menu,'success update');
     }
     function destroy($id){
-        $menu=menu::findOrFail($id)->delete();
-       return $menu;
+       $validate= validator(['id'=>$id],['id'=>'exists:menus,id|integer']);
+        if( $validate->fails())
+        return $this->returnError($validate->errors()->getMessages());
+
+        return $this->returnCheck(menu::find($id)->delete(),"success delete","fails delete");
+       //return $val->errors()->all(':key :message');
     }
 }

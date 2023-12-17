@@ -22,7 +22,7 @@ class OrderItemResource extends JsonResource
             'name'=>$item[0]->name,
              'price'=>$item[0]->price,
              'image'=>$item[0]->image,
-             'preparation_time'=>$item[0]->Preparation_time,
+             'preparation_time'=>$item[0]->preparation_time,
             'quantity'=>$this->quantity,
         ];
     }

@@ -27,8 +27,10 @@ use Illuminate\Support\Facades\Route;
 //Route::get('order','');
 
 Route::post('login',[UserController::class,'login']);
+Route::get('logout',[UserController::class,'logout']);
 Route::get('menu',[menuController::class,'show']);
 Route::post('order',[orderController::class,'store']);
+
 Route::get('report',[orderController::class,'report'])->middleware(['auth:sanctum', 'abilities:*']);
 
 // function (){
@@ -62,11 +64,11 @@ Route::group(["prefix"=>'user',"controller"=>UserController::class,
 Route::group(["prefix"=>'order',"controller"=>OrderController::class,
 'middleware' => ['auth:sanctum', 'abilities:editOrder']],function(){
     Route::get('show','show')->withoutMiddleware('abilities:editOrder');
-    Route::post('store','store');//->withoutMiddleware('auth:sanctum');
-    Route::post('update/{user_id}','update');
-    Route::get('destroy/{user_id}','destroy');
-    Route::post('updateitem/{user_id}','updateItemOfOrder');
-    Route::post('deleteitem/{user_id}','deleteItemOfOrder');
+    Route::post('store','store');
+    Route::post('update/{order_id}','update');
+    Route::get('destroy/{order_id}','destroy');
+    Route::post('updateitem','updateItemOfOrder');
+    Route::post('deleteitem/{item_id}','deleteItemOfOrder');
 });
 
 Route::group(["prefix"=>'promo',"controller"=>PromoCodeController::class,
@@ -75,7 +77,6 @@ Route::group(["prefix"=>'promo',"controller"=>PromoCodeController::class,
     Route::post('store','store');//->withoutMiddleware('auth:sanctum');
     Route::post('update/{promo_id}','update');
     Route::get('destroy/{promo_id}','destroy');
-
 });
 
 

@@ -24,8 +24,8 @@ class ItemStoreRequest extends FormRequest
         return [
             'name'=>"required|string|unique:items,name",
             'price'=>"required|numeric",
-            'details'=>"string",
-            'Preparation_time'=>'required|numeric',
+            'details'=>"string|nullable",
+            'preparation_time'=>'required|numeric',
             'menu_id'=>'required|exists:menus,id',
             'active'=>'required|boolean',
             'image'=>'required|image',

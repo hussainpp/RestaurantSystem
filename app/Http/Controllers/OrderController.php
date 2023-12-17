@@ -4,23 +4,25 @@ namespace App\Http\Controllers;
 
 use App\Providers\CreatedOrder;
 use App\Http\Requests\OrderStoreRequest;
+use App\Http\Requests\OrderUpdateItemRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\chef;
 use App\Models\order;
 use App\Models\orderItem;
 use App\Models\promoCode;
+use App\Traits\GeneralOutput;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
+   use GeneralOutput;
    function store(OrderStoreRequest $request)
    {
-      $request->filled('promo_code') ? $code = promoCode::where('code', $request->promo_code)->first()
-         : 0;
+      $request->filled('promo_code') 
+      ?$code = promoCode::where('code', $request->promo_code)->first():0;
 
       Auth::check()
          ? $order = order::create($request->except('user_id', 'promo_code_id')
@@ -39,14 +41,18 @@ class OrderController extends Controller
          CreatedOrder::dispatch($a);
       }
       //CreatedOrder::dispatch(orderItem::where('order_id',$order->id)->get());
-
-      return  $order->with('orderItem')->where('id', $order->id)->get();
+      return $this->returnData('data',$order->with('orderItem')->where('id', $order->id)->get()
+      ,'success update');
    }
 
    function update(OrderUpdateRequest $request, $id)
    {
       $request->filled('promo_code') ? $code = promoCode::where('code', $request->promo_code)->first() : 0;
-
+      
+      $validate= validator(['id'=>$id],['id'=>'exists:orders,id']);
+      if($validate->fails())
+      return $this->returnError($validate->errors()->getMessages());
+      
       $order = order::findOrFail($id);
 
       Auth::check()
@@ -55,59 +61,86 @@ class OrderController extends Controller
          : $order->update($request->except('user_id', 'promo_code_id', 'type_order_id')
             + ['promo_code_id' => $code->id ?? $order->promo_code_id]);
 
-      return $order;
-   }
+            return $this->returnData('data',$order,'success update');
+         }
 
-   function updateItemOfOrder(Request $request, $id)
+   function updateItemOfOrder(OrderUpdateItemRequest $request)
    {
-      $validated = $request->validate([
-         'item_id' => "exists:items,id",
-         'quantity' => 'numeric'
-      ]);
-      $order = orderItem::findOrFail($id);
-      $order->update($request->except('order_id'));
-      //$or=$order->orderItem()->createMany($request->item);
-      return $order;
+      $orders=[];
+      foreach( $request->item as $it)
+      $orders[]=orderItem::updateOrCreate(
+         ['item_id'=>$it['item_id'],'order_id'=>$it['order_id']],['quantity'=>$it['quantity']]
+      );
+      // $order=orderItem::upsert(
+      //    $request->item,['quantity']
+      // );
+      return $this->returnData('data',$orders,'success update');
    }
 
    function deleteItemOfOrder($id)
    {
-      $order = orderItem::findOrFail($id)->delete();
-      return $order;
+      $validate= validator(['id'=>$id],['id'=>'exists:order_items,id']);
+      if($validate->fails())
+      return $this->returnError($validate->errors()->getMessages());
+
+      orderItem::findOrFail($id)->delete();
+      return $this->returnSuccessMessage("success delete");
    }
 
    function destroy($id)
    {
-      $order = order::findOrFail($id)->delete();
+      $validate= validator(['id'=>$id],['id'=>'exists:orders,id']);
+      if($validate->fails())
+      return $this->returnError($validate->errors()->getMessages());
+
+      order::findOrFail($id)->delete();
       orderItem::where('order_id', $id)->delete();
-      return $order;
+      return $this->returnSuccessMessage("success delete");
    }
+   
    function show(Request $request)
    {
+      
       $filters = [];
       $request->filled('id') ? $filters[] = ['id', '=', $request->id] : 0;
       $request->filled('name') ? $filters[] = ['name', 'like', "%{$request->name}%"] : 0;
       $request->filled('from_price') ? $filters[] = ['total_price','>=',$request->from_price]:0;
       $request->filled('to_price') ? $filters[] = ['total_price','<=',$request->to_price]:0;
       $request->filled('from_created_at') ? $filters[] = ['created_at','>=',$request->from_created_at]:0;
-      $request->filled('to_created_at') ? $filters[] = ['created_at','<=',$request->to_created_at]:0;
-      $request->filled('user_id') ? $filters[] = ['user_id','=',$request->user_id]:0;
+   
+      $request->filled('to_created_at') ? $filters[] = ['created_at','<=',
+        Carbon::hasFormatWithModifiers($request->to_created_at, 'Y#m#d *')
+      ?$request->to_created_at:$request->to_created_at.' 23:59:59']:0;
 
-      $order = order::where($filters)->
-      when($request->type_order_id,function($q) use($request){
+      // $request->filled('type_order_id') ? $filters[] = ['type_order_i','like',"$request->type_order_id"]:0;
+     
+      $order = order::where($filters)
+      ->when($request->type_order_id != [],function($q) use($request){
          return $q->whereIn('type_order_id', $request->type_order_id);
       })
+      ->when($request->state_order_id != [],function($q) use($request){
+         return $q->whereIn('state_order_id', $request->state_order_id);
+      })
       ->get();
-
-    $order->where($filters);
-      return OrderResource::collection($order);
+         //return $order;
+          return OrderResource::collection($order);
    }
 
    function report(Request $request)
    {
       $filters = [];
-      $request->filled('stage_order_id') ? $filters[] = ['stage_order_id', '=', $request->stage_order_id] : 0;
-      
+      $request->filled('state_order_id') ? $filters[] = ['state_order_id', '=', $request->state_order_id] : 0;
+      $request->filled('type_order_id') ? $filters[] = ['type_order_id', '=', $request->type_order_id] : 0;
+      $request->filled('from_created_at') ? $filters[] = ['orders.created_at','>=',$request->from_created_at]:0;
+      $request->filled('to_created_at') ? $filters[] = ['created_at','<=',$request->to_created_at]:0;
+    // echo Carbon::after;
+      $stateOrder = order::selectRaw('GROUP_CONCAT(DISTINCT state_orders.name) as state_order_id, count(*) as total')
+         ->where($filters)
+         ->join('state_orders', 'state_order_id', '=', 'state_orders.id')
+         ->groupBy('state_order_id')
+         ->orderBy('total', 'desc')
+         ->get();
+
       $typeOrder = order::selectRaw('GROUP_CONCAT(DISTINCT type_orders.name) as type_order_id, count(*) as total')
          ->where($filters)
          ->join('type_orders', 'type_order_id', '=', 'type_orders.id')
@@ -121,12 +154,15 @@ class OrderController extends Controller
          ->orderBy('total', 'desc')->limit(10)
          ->get();
 
-      $typeOrde = order::whereBetween('created_at', [Carbon::today(), Carbon::tomorrow()])->count();
+      // $typeOrde = order::
+      // whereBetween('created_at', [Carbon::today(), Carbon::tomorrow()])->
+      // count();
       //echo Carbon::yesterday();
       $allOrder = $typeOrder->sum('total');
       return [
          'all_order' => $allOrder,
-         'type_order' => $typeOrde,
+         'state_order'=>$stateOrder,
+         'type_order' => $typeOrder,
          'top_ten_items' => $topItemTen
       ];
    }

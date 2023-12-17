@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->string('details')->nullable();
             $table->boolean('active');
-            $table->integer('Preparation_time');
+            $table->integer('preparation_time');
             $table->foreignId('menu_id');
             $table->timestamps();
         });

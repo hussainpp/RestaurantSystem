@@ -23,7 +23,6 @@ class MenuUpdateRequest extends FormRequest
     {
         return [
             'name'=>"unique:menus,name,{$this->route('menu_id')},id|string"
-
         ];
     }
 }

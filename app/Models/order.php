@@ -18,9 +18,10 @@ class order extends Model
             :$this->total_price-($this->total_price/$code->discount),
         );
     }
-    // public function scopeOf(Builder $query,string $oper,?string $type): void
+
+    // public function scopeOf(Builder $query,string $oper,string|array|null $type): void
     // {
-    //     $type!=null?$query->where($oper,$type):0;
+    //     $type!=null?$query->whereBetween("$oper in ($type[0],)",):0;
         
     // }
     protected $appends = ['price_discount'];
@@ -40,10 +41,9 @@ class order extends Model
      
     function getTotalPreparationTimeAttribute(){
         $out= orderItem::where('order_id',$this->id)->
-        selectRaw('SUM(Preparation_time*quantity) as total')->
+        selectRaw('SUM(preparation_time*quantity) as total')->
         join('items','item_id','=','items.id')->get();
         return (int) $out[0]->total;
-        //->withSum('item','Preparation_time')->sum('item_sum_preparation_time')
         
     }  
     function getTotalPriceAttribute(){

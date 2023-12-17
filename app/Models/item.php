@@ -14,7 +14,7 @@ class item extends Model
         'image',
         'details',
         'active',
-        'Preparation_time',
+        'preparation_time',
         'menu_id',
     ];
     function getImageAttribute($image){

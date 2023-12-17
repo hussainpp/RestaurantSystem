@@ -16,6 +16,7 @@ class PromoCodeController extends Controller
         return $promoCode;
      }
      function update(Request $request,$id){
+      validator(['id'=>$id],['id'=>'exists:promo_codes,id'])->validated();
         $request->validate([
             'code' => 'string',
             'discount' => 'numeric'
@@ -25,6 +26,7 @@ class PromoCodeController extends Controller
         return $promoCode;
      }
      function destroy($id){
+      validator(['id'=>$id],['id'=>'exists:promo_codes,id'])->validated();
         $promoCode=promoCode::findOrFail($id)->delete();
         return $promoCode;
      }

@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Models\order;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Validator;
 
 class OrderUpdateRequest extends FormRequest
 {
@@ -16,6 +18,7 @@ class OrderUpdateRequest extends FormRequest
         return true;
     }
 
+   
     /**
      * Get the validation rules that apply to the request.
      *
@@ -23,46 +26,66 @@ class OrderUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        if(Auth::check()){
-        return [
-            'type_order_id'=>'exists:type_orders,id|numeric',
-            'name'=>'string|required_unless:type_order_id,1',
-            'address'=>'string|required_unless:type_order_id,1',
-            'phone'=>'numeric|required_unless:type_order_id,1',
-            'note'=>'string|nullable',
-            'user_id'=>'missing',
-            "state_order_id"=>["exists:state_orders,id","numeric",function (string $attribute, mixed $value, Closure $fail) {
-                if ($value == 2&&$this->type_order_id==1) {
-                    $fail("The {$attribute} is invalid.");
-                }
-            }],
-            "promo_code"=>'string|nullable|exists:promo_codes,code',
-            'item_id'=>'array',
-            'item_id.*'=>'required_array_keys:item_id,quantity',
-            'item_id.*.item_id'=>'exists:items,id|numeric',
-            'item_id.*.quantity'=>'numeric',
-        ];
+        //order::find($this->route('user_id'));
+        if (Auth::check()) {
+            return [
+                'type_order_id' => 'exists:type_orders,id|numeric',
+
+                'name' => 'string', //|required_unless:type_order_id,1',
+                'address' => 'string', //|required_unless:type_order_id,1',
+                'phone' => 'numeric|digits_between:11,16', //|required_unless:type_order_id,1',
+
+                'note' => 'string|nullable',
+                'user_id' => 'missing',
+                "state_order_id" => ["exists:state_orders,id", "numeric", function (string $attribute, mixed $value, Closure $fail) {
+                    if ($value == 2 && $this->type_order_id == 1) {
+                        $fail("The {$attribute} is invalid.");
+                    }
+                }],
+                "promo_code" => 'string|nullable|exists:promo_codes,code',
+             
+            ];
+        } else {
+            return [
+                'user_id' => 'missing',
+                'type_order_id' => 'missing',
+                "state_order_id" => 'missing',
+                
+                'name' => 'string',
+                'address' => 'string',
+                'phone' => 'numeric|digits_between:11,16',
+                'note' => 'string|nullable',
+                "promo_code" => 'string|nullable|exists:promo_codes,code',
+    
+            ];
+        }
     }
-    else
+
+    function after()
     {
+        $or = order::find($this->route('order_id'));
         return [
-            'type_order_id'=>'missing',
-            'name'=>'string|required_unless:type_order_id,1',
-            'address'=>'string|required_unless:type_order_id,1',
-            'phone'=>'numeric|required_unless:type_order_id,1',
-            'note'=>'string|nullable',
-            'user_id'=>'missing',
-            "state_order_id"=>["exists:state_orders,id","numeric",function (string $attribute, mixed $value, Closure $fail) {
-                if ($value == 2&&$this->type_order_id==1) {
-                    $fail("The {$attribute} is invalid.");
+            function (Validator $validator) use ($or) {
+                if (
+                    $this->type_order_id != null&&$this->type_order_id != 1 && $or->type_order_id != $this->type_order_id
+                ) {
+                    $this->name == null? $validator->errors()->add('name','The name is required'):0;
+                    $this->phone == null? $validator->errors()->add('phone','The phone is required.'):0;
+                    $this->address == null? $validator->errors()->add('address',"The address is required."):0;
                 }
-            }],
-            "promo_code"=>'string|nullable|exists:promo_codes,code',
-            'item_id'=>'array',
-            'item_id.*'=>'required_array_keys:item_id,quantity',
-            'item_id.*.item_id'=>'exists:items,id|numeric',
-            'item_id.*.quantity'=>'numeric',
+            }
         ];
     }
-}
+    // function required_custom(string $attribute, mixed $value, Closure $fail)
+    // {
+    //     $or = order::find($this->route('order_id'));
+    //     echo 'rrrrrrrrrr';
+    //     $fail("The {$attribute} is required.");
+    //     if (
+    //         $this->type_order_id == 2 && $or->type_order_id != $this->type_order_id
+    //         && $value == null
+    //     ) {
+    //         $fail("The {$attribute} is required.");
+    //     }
+    // }
 }

@@ -24,11 +24,11 @@ class ItemUpdateRequest extends FormRequest
         return [
             'name'=>"string|unique:items,name,{$this->route('item_id')},id",
             'price'=>"numeric",
-            'details'=>"string",
-            'Preparation_time'=>'numeric',
+            'details'=>"string|nullable",
+            'preparation_time'=>'numeric',
             'menu_id'=>'exists:menus,id',
             'active'=>'boolean',
-            'image'=>'required|image'
+            'image'=>'image'
         ];
     }
 }

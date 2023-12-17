@@ -23,7 +23,7 @@ class ItemFactory extends Factory
               'image'=>fake()->shuffleString(),
               'details'=>fake()->text(),
               'active'=>fake()->boolean(),
-              'Preparation_time'=>fake()->numberBetween(10,60),
+              'preparation_time'=>fake()->numberBetween(10,60),
               'menu_id'=>fake()->numberBetween(1,menu::count())
         ];
     }

@@ -24,7 +24,8 @@ class UserStoreRequest extends FormRequest
         return [
             'name'=>'required|string',
             'email'=>"required|unique:users,email|email",
-            'password'=>"required|string",
+            'password'=>"required|string|confirmed",
+            //'repeatPassword'=>"required|confirmed",
             'phone'=>"required|numeric",
             "address"=>"string|nullable",
             "active"=>"required|boolean",
