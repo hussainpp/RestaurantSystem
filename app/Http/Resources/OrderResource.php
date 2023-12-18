@@ -16,14 +16,13 @@ class OrderResource extends JsonResource
     {
         return[
             'id'=>$this->id,
-            'name'=>$this->name,
+            'name'=>$this->name??null,
             'address'=>$this->address,
             'phone'=>$this->phone,
             'note'=>$this->note,
-            'user'=>$this->user->name,
+            'user'=>$this->user->name??null,
             'type_order'=>$this->typeOrder->name,
             'state_order'=>$this->stateOrder->name,
-            // 'item_orderr'=>$this::order_item(),
             'total_preparation_time'=>$this->total_preparation_time,
             'total_price'=>$this->total_price,
             'total_price_after_discount'=>$this->price_discount,

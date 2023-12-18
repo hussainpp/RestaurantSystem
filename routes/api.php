@@ -24,7 +24,6 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
-//Route::get('order','');
 
 Route::post('login',[UserController::class,'login']);
 Route::get('logout',[UserController::class,'logout']);
@@ -33,13 +32,11 @@ Route::post('order',[orderController::class,'store']);
 
 Route::get('report',[orderController::class,'report'])->middleware(['auth:sanctum', 'abilities:*']);
 
-// function (){
-//      if(Auth::check()) return redirect('api/menu/show'); else return ;
-// });
+
 
 Route::group(["prefix"=>'menu',"controller"=>MenuController::class,
 'middleware' => ['auth:sanctum', 'abilities:editItem']],function(){
-    Route::get('show','showAll')->withoutMiddleware('abilities:editItem');
+    Route::get('show','show')->withoutMiddleware(['abilities:editItem']);
     Route::post('store','store');
     Route::post('update/{menu_id}','update');
     Route::get('destroy/{menu_id}','destroy');

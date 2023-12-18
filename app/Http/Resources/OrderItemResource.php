@@ -15,14 +15,14 @@ class OrderItemResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $item=item::where('id',$this->item_id)->get();
+        $item=item::find($this->item_id);
         // return parent::toArray($request);
         return[
             'id'=>$this->id,
-            'name'=>$item[0]->name,
-             'price'=>$item[0]->price,
-             'image'=>$item[0]->image,
-             'preparation_time'=>$item[0]->preparation_time,
+            'name'=>$item->name??null,
+             'price'=>$item->price??null,
+             'image'=>$item->image??null,
+             'preparation_time'=>$item->preparation_time??null,
             'quantity'=>$this->quantity,
         ];
     }

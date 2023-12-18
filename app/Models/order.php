@@ -49,7 +49,6 @@ class order extends Model
     function getTotalPriceAttribute(){
         $out= orderItem::where('order_id',$this->id)->
         selectRaw('SUM(price*quantity) as total')->
-
         join('items','item_id','=','items.id')->get();
         return (int)$out[0]->total;
     }

@@ -4,17 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\promoCode;
 use Illuminate\Http\Request;
+   use App\Traits\GeneralOutput;
+
 
 class PromoCodeController extends Controller
 {
+    use GeneralOutput;
+
     function store(Request $request){
         $request->validate([
             'code' => 'string|required',
             'discount' => 'numeric|required'
         ]);
         $promoCode=promoCode::create($request->all());
-        return $promoCode;
-     }
+        return $this->returnData(
+            'data',
+            $promoCode,
+            'success create'
+        );     }
      function update(Request $request,$id){
       validator(['id'=>$id],['id'=>'exists:promo_codes,id'])->validated();
         $request->validate([
@@ -23,13 +30,18 @@ class PromoCodeController extends Controller
         ]);
         $promoCode=promoCode::findOrFail($id);
         $promoCode->update($request->all());
-        return $promoCode;
-     }
+        return $this->returnData(
+            'data',
+            $promoCode,
+            'success update'
+        );     }
      function destroy($id){
-      validator(['id'=>$id],['id'=>'exists:promo_codes,id'])->validated();
-        $promoCode=promoCode::findOrFail($id)->delete();
-        return $promoCode;
-     }
+        $validate = validator(['id'=>$id],['id'=>'exists:promo_codes,id']);
+        if ($validate->fails())
+           return $this->returnError($validate->errors()->getMessages());
+        promoCode::findOrFail($id)->delete();
+        return $this->returnSuccessMessage("success delete");
+    }
 
      function show(Request $request){
         $filters=[];
@@ -38,7 +50,9 @@ class PromoCodeController extends Controller
         $request->filled('discount')?$filters[]=['discount',$request->discount] : 0;
 
         $promoCode=promoCode::where($filters)->get();
-        return $promoCode;
-     }
+        return $this->returnData(
+            'data',
+            $promoCode,
+        );     }
 
 }

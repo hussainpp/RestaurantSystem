@@ -17,6 +17,5 @@ class MenuResource extends JsonResource
         return [
             $this->name=>ItemResource::collection($this->item),
         ];
-        // return parent::toArray($request);
     }
 }
