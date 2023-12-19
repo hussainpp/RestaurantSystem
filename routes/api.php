@@ -20,10 +20,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
-
 
 Route::post('login',[UserController::class,'login']);
 Route::get('logout',[UserController::class,'logout']);
@@ -64,14 +60,14 @@ Route::group(["prefix"=>'order',"controller"=>OrderController::class,
     Route::post('store','store');
     Route::post('update/{order_id}','update');
     Route::get('destroy/{order_id}','destroy');
-    Route::post('updateitem','updateItemOfOrder');
-    Route::post('deleteitem/{item_id}','deleteItemOfOrder');
+    Route::post('updateItem','updateItemOfOrder');
+    Route::post('deleteItem/{item_id}','deleteItemOfOrder');
 });
 
 Route::group(["prefix"=>'promo',"controller"=>PromoCodeController::class,
 'middleware' => ['auth:sanctum', 'abilities:*']],function(){
     Route::get('show','show')->withoutMiddleware('abilities:*');
-    Route::post('store','store');//->withoutMiddleware('auth:sanctum');
+    Route::post('store','store');
     Route::post('update/{promo_id}','update');
     Route::get('destroy/{promo_id}','destroy');
 });

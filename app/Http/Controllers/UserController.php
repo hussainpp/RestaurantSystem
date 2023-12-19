@@ -20,11 +20,10 @@ class UserController extends Controller
         $request->filled('name') ? $filters[] = ['name', 'like', "%{$request->name}%"] : 0;
         $request->filled('id') ? $filters[] = ['id', '=', $request->id] : 0;
         $request->filled('item_id') ? $filters[] = ['item_id', '=', $request->id] : 0;
-        // $request->filled('role_id')?$filters[]=['role_id', '=', $request->id] : 0;
 
         $user = User::where($filters)
-            ->when($request->role_id != [], function ($q) use ($request) {
-                return $q->whereIn('role_id', $request->role_id);
+            ->when($request->role_id != [], function ($query) use ($request) {
+                return $query->whereIn('role_id', $request->role_id);
             })->get();
 
         return $this->returnData(
@@ -82,7 +81,7 @@ class UserController extends Controller
     function login(Request $request)
     {
         $ability = ['0'];
-        $rr= $request->validate([
+        $request->validate([
             'email' => 'email|exists:users,email|required',
             'password' => 'string|required'
         ]);
@@ -105,8 +104,8 @@ class UserController extends Controller
                 $ability = ['showItem', 'showOrder'];
         }
         if ($user->active && Hash::check($request->password, $user->password)) {
-             $token=$user->createToken('my', $ability)->plainTextToken;
-             return $this->returnData('token',$token,'success login'); 
+            $token = $user->createToken('my', $ability)->plainTextToken;
+            return $this->returnData('token', $token, 'success login');
         } else {
             return $this->returnError('error');
         }
@@ -116,6 +115,5 @@ class UserController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
         return $this->returnSuccessMessage("success logout");
-
     }
 }

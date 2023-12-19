@@ -16,7 +16,7 @@ class OrderStoreRequest extends FormRequest
     {
         return true;
     }
- 
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -24,52 +24,48 @@ class OrderStoreRequest extends FormRequest
      */
     public function rules(): array
     {
-        if(Auth::check())
-        return [
-            'user_id'=>'missing',
-            "state_order_id"=>"missing",
-            'type_order_id'=>'exists:type_orders,id|required',
+        if (Auth::check())
+            return [
+                'user_id' => 'missing',
+                "state_order_id" => "missing",
+                'type_order_id' => 'exists:type_orders,id|required',
+                'name' => 'string|required_unless:type_order_id,1',
+                'address' => 'string|required_unless:type_order_id,1',
+                'phone' => 'numeric|digits_between:11,16|required_unless:type_order_id,1',
+                'note' => 'string|nullable',
+                "promo_code" => 'string|nullable|exists:promo_codes,code',
 
-            'name'=>'string|required_unless:type_order_id,1',
-            'address'=>'string|required_unless:type_order_id,1',
-            'phone'=>'numeric|digits_between:11,16|required_unless:type_order_id,1',
-            
-           'note'=>'string|nullable',
-           "promo_code"=>'string|nullable|exists:promo_codes,code',
-           
-           'item'=>'array|required',
-           'item.*'=>'required_array_keys:item_id,quantity',
-           'item.*.item_id'=>["bail","exists:items,id",function (string $attribute, int $value, Closure $fail) {
-                $item=item::find($value);
-                if (!$item->active) {
-                    $fail("The {$attribute} field must be active.");
-                }
-            }],
-            'item.*.quantity'=>'numeric|min:1',
-            
-        ];
+                'item' => 'array|required',
+                'item.*' => 'required_array_keys:item_id,quantity',
+                'item.*.item_id' => ["bail", "exists:items,id", function (string $attribute, int $value, Closure $fail) {
+                    $item = item::find($value);
+                    if (!$item->active) {
+                        $fail("The {$attribute} field must be active.");
+                    }
+                }],
+                'item.*.quantity' => 'numeric|min:1',
+
+            ];
         else return [
-            "type_order_id"=>"missing",
-            'user_id'=>'missing',
-            "state_order_id"=>"missing",
+            "type_order_id" => "missing",
+            'user_id' => 'missing',
+            "state_order_id" => "missing",
+            'name' => 'string|required',
+            'address' => 'string|required',
+            'phone' => 'numeric|required|digits_between:11,16',
+            'note' => 'string|nullable',
+            "promo_code" => 'string|nullable|exists:promo_codes,code',
 
-            'name'=>'string|required',
-            'address'=>'string|required',
-            'phone'=>'numeric|required|digits_between:11,16',
-            
-            'note'=>'string|nullable',
-            "promo_code"=>'string|nullable|exists:promo_codes,code',
-
-            'item'=>'array|required',
-            'item.*'=>'required_array_keys:item_id,quantity',
-            'item.*.item_id'=>["bail","exists:items,id",function (string $attribute, int $value, Closure $fail) {
-                $item=item::find($value);
+            'item' => 'array|required',
+            'item.*' => 'required_array_keys:item_id,quantity',
+            'item.*.item_id' => ["bail", "exists:items,id", function (string $attribute, int $value, Closure $fail) {
+                $item = item::find($value);
                 if (!$item->active) {
                     $fail("The {$attribute} field must be active.");
                 }
             }],
-            'item.*.quantity'=>'numeric|min:1',
-            
+            'item.*.quantity' => 'numeric|min:1',
+
         ];
     }
 }

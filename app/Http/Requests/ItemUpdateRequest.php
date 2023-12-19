@@ -28,7 +28,7 @@ class ItemUpdateRequest extends FormRequest
             'preparation_time'=>'numeric',
             'menu_id'=>'exists:menus,id',
             'active'=>'boolean',
-            'image'=>'image'
+            'image'=>'image|max:10000'
         ];
     }
 }

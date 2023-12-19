@@ -28,7 +28,7 @@ class ItemStoreRequest extends FormRequest
             'preparation_time'=>'required|numeric',
             'menu_id'=>'required|exists:menus,id',
             'active'=>'required|boolean',
-            'image'=>'required|image',
+            'image'=>'required|image|max:5000',
         ];
     }
 }

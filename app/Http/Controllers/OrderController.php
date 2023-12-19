@@ -30,14 +30,14 @@ class OrderController extends Controller
          : $order = order::create($request->except('user_id', 'promo_code_id', 'type_order_id')
             + ['user_id' => null, 'type_order_id' => 3, 'promo_code_id' => $code->id ?? null]);
 
-      $it = $order->orderItem()->createMany($request->item);
+      $orderItems = $order->orderItem()->createMany($request->item);
 
       /**
        * send notification 
        */
-      foreach ($it as $i) {
-         $ch = chef::where('item_id', $i->item_id)->first();
-         $a = $i->toArray() + ['user_id' => $ch->user_id ?? null];
+      foreach ($orderItems as $orderItem) {
+         $chef = chef::where('item_id', $orderItem->item_id)->first();
+         $a = $orderItem->toArray() + ['user_id' => $chef->user_id ?? null];
          CreatedOrder::dispatch($a);
       }
       //CreatedOrder::dispatch(orderItem::where('order_id',$order->id)->get());
@@ -57,12 +57,16 @@ class OrderController extends Controller
          return $this->returnError($validate->errors()->getMessages());
 
       $order = order::findOrFail($id);
-
+      if($order->type_order_id==1&&$request->state_order_id==2){
+         return $this->returnError('The state_order_id is invalid.');
+      }
       Auth::check()
          ? $order->update($request->except('user_id', 'promo_code_id')
             + ['user_id' => Auth::id(), 'promo_code_id' => $code->id ?? $order->promo_code_id])
          : $order->update($request->except('user_id', 'promo_code_id', 'type_order_id')
             + ['promo_code_id' => $code->id ?? $order->promo_code_id]);
+
+           // return var_dump($order->whereExists("state_order_id",3)->get());
 
       return $this->returnData('data', $order, 'success update');
    }
@@ -120,11 +124,11 @@ class OrderController extends Controller
       // $request->filled('type_order_id') ? $filters[] = ['type_order_i','like',"$request->type_order_id"]:0;
 
       $order = order::where($filters)
-         ->when($request->type_order_id != [], function ($q) use ($request) {
-            return $q->whereIn('type_order_id', $request->type_order_id);
+         ->when($request->type_order_id != [], function ($query) use ($request) {
+            return $query->whereIn('type_order_id', $request->type_order_id);
          })
-         ->when($request->state_order_id != [], function ($q) use ($request) {
-            return $q->whereIn('state_order_id', $request->state_order_id);
+         ->when($request->state_order_id != [], function ($query) use ($request) {
+            return $query->whereIn('state_order_id', $request->state_order_id);
          })
          ->get();
       $order = $order->where('total_price', '>=', $request->from_price)

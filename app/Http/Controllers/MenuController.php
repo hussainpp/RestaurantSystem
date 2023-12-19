@@ -21,8 +21,10 @@ class MenuController extends Controller
     {
         $filters = [];
         $filterInside = [];
-        $request->filled('active') ? $filterInside[] = ['active', '=', $request->active] : 0;
-        Auth::check()?0:$filterInside[] = ['active', '=', 1];
+        if (Auth::check())
+            $request->filled('active') ? $filterInside[] = ['active', '=', $request->active] : 0;
+        else
+            $filterInside[] = ['active', '=', 1];
 
         $request->filled('name') ? $filters[] = ['name', 'like', "%$request->name%"] : 0;
         $request->filled('name_item') ? $filterInside[] = ['name', 'like', "%$request->name_item%"] : 0;
@@ -30,8 +32,8 @@ class MenuController extends Controller
         $request->filled('to_price') ? $filterInside[] = ['price', '<=', $request->to_price] : 0;
         $request->filled('from_preparation_time') ? $filterInside[] = ['preparation_time', '>=', $request->from_preparation_time] : 0;
         $request->filled('to_preparation_time') ? $filterInside[] = ['preparation_time', '<=', $request->to_preparation_time] : 0;
-        
-        $menu = menu::where($filters)->with(['item' => function (Builder $query) use($filterInside){
+
+        $menu = menu::where($filters)->with(['item' => function (Builder $query) use ($filterInside) {
             $query->where($filterInside);
         }])->get();
         return $this->returnData('foods', MenuResource::collection($menu));

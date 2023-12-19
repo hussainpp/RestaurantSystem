@@ -26,19 +26,16 @@ class OrderUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        //order::find($this->route('user_id'));
         if (Auth::check()) {
             return [
                 'type_order_id' => 'exists:type_orders,id|numeric',
-
-                'name' => 'string', //|required_unless:type_order_id,1',
-                'address' => 'string', //|required_unless:type_order_id,1',
-                'phone' => 'numeric|digits_between:11,16', //|required_unless:type_order_id,1',
-
+                'name' => 'string', 
+                'address' => 'string', 
+                'phone' => 'numeric|digits_between:11,16',
                 'note' => 'string|nullable',
                 'user_id' => 'missing',
                 "state_order_id" => ["exists:state_orders,id", "numeric", function (string $attribute, mixed $value, Closure $fail) {
-                    if ($value == 2 && $this->type_order_id == 1) {
+                    if ($value == "2" && $this->type_order_id == "1") {
                         $fail("The {$attribute} is invalid.");
                     }
                 }],
@@ -76,16 +73,5 @@ class OrderUpdateRequest extends FormRequest
             }
         ];
     }
-    // function required_custom(string $attribute, mixed $value, Closure $fail)
-    // {
-    //     $or = order::find($this->route('order_id'));
-    //     echo 'rrrrrrrrrr';
-    //     $fail("The {$attribute} is required.");
-    //     if (
-    //         $this->type_order_id == 2 && $or->type_order_id != $this->type_order_id
-    //         && $value == null
-    //     ) {
-    //         $fail("The {$attribute} is required.");
-    //     }
-    // }
+   
 }
