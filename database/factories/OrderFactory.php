@@ -25,9 +25,9 @@ class OrderFactory extends Factory
             'address'=>fake()->address(),
             'phone'=>fake()->phoneNumber(),
             'note'=>fake()->text(),
-            'user_id'=>fake()->numberBetween(1,User::count()),
+            'user_id'=>fake()->numberBetween(1,3),
             'type_order_id'=>fake()->numberBetween(1,typeOrder::count()),
-            'state_order_id'=>fake()->numberBetween(1,stateOrder::count()),
+            'state_order_id'=>1,
             'promo_code_id'=>fake()->numberBetween(1,promoCode::count()),
 
 

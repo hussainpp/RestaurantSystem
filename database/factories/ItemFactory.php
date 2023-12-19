@@ -22,7 +22,7 @@ class ItemFactory extends Factory
               'price'=>fake()->numberBetween(1000,30000),
               'image'=>fake()->shuffleString(),
               'details'=>fake()->text(),
-              'active'=>fake()->boolean(),
+              'active'=>1,
               'preparation_time'=>fake()->numberBetween(10,60),
               'menu_id'=>fake()->numberBetween(1,menu::count())
         ];

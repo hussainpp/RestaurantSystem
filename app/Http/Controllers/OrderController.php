@@ -13,6 +13,7 @@ use App\Models\orderItem;
 use App\Models\promoCode;
 use App\Traits\GeneralOutput;
 use Carbon\Carbon;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -40,7 +41,6 @@ class OrderController extends Controller
          $a = $orderItem->toArray() + ['user_id' => $chef->user_id ?? null];
          CreatedOrder::dispatch($a);
       }
-      //CreatedOrder::dispatch(orderItem::where('order_id',$order->id)->get());
       return $this->returnData(
          'data',
          $order->with('orderItem')->where('id', $order->id)->get(),
@@ -57,7 +57,7 @@ class OrderController extends Controller
          return $this->returnError($validate->errors()->getMessages());
 
       $order = order::findOrFail($id);
-      if($order->type_order_id==1&&$request->state_order_id==2){
+      if ($order->type_order_id == 1 && $request->state_order_id == 2) {
          return $this->returnError('The state_order_id is invalid.');
       }
       Auth::check()
@@ -66,7 +66,7 @@ class OrderController extends Controller
          : $order->update($request->except('user_id', 'promo_code_id', 'type_order_id')
             + ['promo_code_id' => $code->id ?? $order->promo_code_id]);
 
-           // return var_dump($order->whereExists("state_order_id",3)->get());
+      // return var_dump($order->whereExists("state_order_id",3)->get());
 
       return $this->returnData('data', $order, 'success update');
    }
@@ -121,8 +121,6 @@ class OrderController extends Controller
 
       $request->filled('user_id') ? $filters[] = ['user_id', '=', $request->user_id] : 0;
 
-      // $request->filled('type_order_id') ? $filters[] = ['type_order_i','like',"$request->type_order_id"]:0;
-
       $order = order::where($filters)
          ->when($request->type_order_id != [], function ($query) use ($request) {
             return $query->whereIn('type_order_id', $request->type_order_id);
@@ -131,19 +129,30 @@ class OrderController extends Controller
             return $query->whereIn('state_order_id', $request->state_order_id);
          })
          ->get();
-      $order = $order->where('total_price', '>=', $request->from_price)
-         ->where('total_price', '<=', $request->to_price);
+      $order = $order->where('total_price', '>=', $request->from_price ?? 0)
+         ->where('total_price', '<=', $request->to_price ?? "1`or 1=1");
       return $this->returnData('data', OrderResource::collection($order));
    }
 
    function report(Request $request)
    {
       $filters = [];
-      $request->filled('state_order_id') ? $filters[] = ['state_order_id', '=', $request->state_order_id] : 0;
+      $filtersForTopItem = [];
+      $request->filled('state_order_id') ? $filters[] = ['state_order_id', $request->state_order_id] : 0;
       $request->filled('type_order_id') ? $filters[] = ['type_order_id', '=', $request->type_order_id] : 0;
-      $request->filled('from_created_at') ? $filters[] = ['orders.created_at', '>=', $request->from_created_at] : 0;
-      $request->filled('to_created_at') ? $filters[] = ['created_at', '<=', $request->to_created_at] : 0;
-      // echo Carbon::after;
+
+      $request->filled('state_order_id') ? $filtersForTopItem[] = [function (Builder $query) {
+         $query->select('state_order_id')
+            ->from('orders')
+            ->whereColumn('orders.id', 'order_items.order_id');
+      }, $request->state_order_id] : 0;
+
+      $request->filled('type_order_id') ? $filtersForTopItem[] = [function (Builder $query) {
+         $query->select('type_order_id')
+            ->from('orders')
+            ->whereColumn('orders.id', 'order_items.order_id');
+      }, $request->type_order_id] : 0;
+
       $stateOrder = order::selectRaw('GROUP_CONCAT(DISTINCT state_orders.name) as state_order_id, count(*) as total')
          ->where($filters)
          ->join('state_orders', 'state_order_id', '=', 'state_orders.id')
@@ -159,15 +168,12 @@ class OrderController extends Controller
          ->get();
 
       $topItemTen = OrderItem::selectRaw('GROUP_CONCAT(DISTINCT items.name) as item_id, count(*) as total')
+         ->where($filtersForTopItem)
          ->join('items', 'item_id', '=', 'items.id')
          ->groupBy('item_id')
          ->orderBy('total', 'desc')->limit(10)
          ->get();
 
-      // $typeOrde = order::
-      // whereBetween('created_at', [Carbon::today(), Carbon::tomorrow()])->
-      // count();
-      //echo Carbon::yesterday();
       $allOrder = $typeOrder->sum('total');
       return [
          'all_order' => $allOrder,
